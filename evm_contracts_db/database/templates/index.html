@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block block_content %}
+<p>The database has the following record counts:</p>
+<ul>
+  <li><strong>Total addresses:</strong> {{ stats.addressCount }}</li>
+  <li><strong>Total transactions:</strong> {{ stats.txCount }}</li>
+</ul>
+{% endblock %}

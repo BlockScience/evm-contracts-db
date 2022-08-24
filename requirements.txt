@@ -1,0 +1,15 @@
+argh
+boto3
+Django
+django-extensions
+django-storages # remove?
+graphviz
+gunicorn # remove?
+matplotlib
+nltk
+numpy
+pandas
+psycopg2-binary
+python-dotenv
+requests
+web3
