@@ -7,6 +7,9 @@ import logging
 class TrueblocksExtractor:
     """Run chifra commands and extract, transform, and load the outputs of these
     e.g., `chifra traces --articulate --fmt json [addresses]` 
+
+    To support setups other than a single machine, probably want to switch to
+    the REST api: https://trueblocks.io/api/
     """
 
     def build_chifra_command(self, params):
@@ -22,7 +25,7 @@ class TrueblocksExtractor:
             filepath: (optional) provide file path to pipe output to
         """
 
-        assert ('function' in params.keys) and ('value' in params.keys), "Provide both a function and a value"
+        assert ('function' in params.keys()) and ('value' in params.keys()), "Provide both a function and a value"
 
         # Get required arguments
         fcn = params['function']
@@ -73,17 +76,23 @@ class TrueblocksExtractor:
         """Call chifra command and return the output as a JSON object
 
         command: chifra call as you would provide in command line
-        parse_as: try to load the result as JSON or as a list of items, one on each line
+        parse_as: try to load the result as JSON or as a list of items, one on 
+            each line
         mode: overwrite or append to file
-        fpath: save output to a specified filepath (otherwise, saves to default JSON file)
+        fpath: save output to a specified filepath, or pass False to suppress 
+            file save (otherwise, saves to default JSON file)
         """
 
-        assert parse_as in ['json', 'lines']
+        DEFAULT_PATH = 'tmp/trueblocks.log'
+
+        assert parse_as in ['json', 'lines'], "Only 'json' and 'lines' (e.g., for result of chifra list) are supported parse_as values"
         if fpath is None:
-            fpath = os.path.join(os.getcwd(), 'tmp/trueblocks.log')
+            fpath = DEFAULT_PATH
+        elif fpath is False:
+            fpath = None
 
         # Redirect output to fpath using pipe 
-        if '>' not in command:
+        if '>' not in command and fpath is not None:
             if 'w' in mode:
                 m = ''
             elif 'a' in mode:
@@ -114,7 +123,7 @@ class TrueblocksExtractor:
             logging.error(e)
             result = None
 
-        return result, fpath
+        return result
 
     def get_txids(self, address):
         """Get list of all transaction IDs for an address from the index"""
