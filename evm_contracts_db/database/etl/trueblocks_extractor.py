@@ -135,6 +135,6 @@ class TrueblocksExtractor:
         }
         
         cmd = self.build_chifra_command(query_list)
-        txIds, _ = self.run_chifra(cmd, parse_as='lines')
+        txIds= self.run_chifra(cmd, parse_as='lines')
 
         return txIds

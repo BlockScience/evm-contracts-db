@@ -124,7 +124,7 @@ class TrueblocksTransformer:
             for log in tx.get('receipt', {}).get('logs', []):
                 #if log['address'] == txData['to_address']:
                 logData = {}
-                logData['id'] = f"{txId}.{log['logIndex']}"
+                logData['log_index'] = f"{txId}.{log['logIndex']}"
                 logData['address'] = log['address']
                 #topics = " ".join([t for t in log.get('topics', [])])
                 #logData['topics'] = topics if len(topics) > 0 else None

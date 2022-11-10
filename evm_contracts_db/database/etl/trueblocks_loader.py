@@ -1,4 +1,5 @@
 import logging
+from django.db import transaction
 
 from evm_contracts_db.database.models import blockchain
 
@@ -6,11 +7,28 @@ from evm_contracts_db.database.models import blockchain
 class TrueblocksLoader:
     """Load the output of TrueblocksTransformer into the database"""
 
+    def __init__(self, chain=None):
+        """By default, assume addresses are on Ethereum mainnet"""
+        if chain is None:
+            self.chain = 'ETH'
+        else:
+            self.chain = chain
+
+    def insert_transactions(self, dataDicts, includeTraces=False):
+        """Upload all blockchain transactions in file"""
+
+        with transaction.atomic():
+            for d in dataDicts:
+                logging.debug(f"Updating/creating BlockchainTransaction for {d['transaction_id']}...")
+                self.update_or_create_transaction_record(d, includeTraces)
+
+        logging.info(f'Added {len(dataDicts)} transactions to database')
+
     def update_or_create_address_record(self, address):
         try:
-            addressObj = blockchain.BlockchainAddress.objects.get(pk=address)
+            addressObj = blockchain.BlockchainAddress.objects.get(address=address, chain=self.chain)
         except blockchain.BlockchainAddress.DoesNotExist:
-            addressObj = blockchain.BlockchainAddress.objects.create(address=address)
+            addressObj = blockchain.BlockchainAddress.objects.create(address=address, chain=self.chain)
             addressObj.save()
 
         return addressObj
@@ -51,6 +69,8 @@ class TrueblocksLoader:
             contractsCreated.append(self.update_or_create_address_record(c))
 
         # Create BlockchainAddress record for each involved address, if any
+        # TODO: find a way to more reliably get all addresses involved. Curently
+        # this is not included in the data model because it was too incomplete.
         addressesInvolved_orig = recordDict.pop('addresses_involved', [])
         addressesInvolved = []
         for c in addressesInvolved_orig:
@@ -76,15 +96,15 @@ class TrueblocksLoader:
 
         # Update or create BlockchainTransaction record
         try:
-            txn = blockchain.BlockchainTransaction.objects.get(pk=recordDict['transaction_id'])
+            txn = blockchain.BlockchainTransaction.objects.get(transaction_id=recordDict['transaction_id'])
             for key, value in recordDict.items():
                 if key not in ['contracts_created', 'logs', 'traces']:
                     setattr(txn, key, value)
                 else:
                     if key == 'contracts_created':
                         txn.contracts_created.add(*value)
-                    if key == 'addresses_involved':
-                        txn.addresses_involved.add(*value)
+                    # if key == 'addresses_involved':
+                    #     txn.addresses_involved.add(*value)
                     if key == 'logs':
                         txn.logs.add(*value)
                     if key == 'traces':
@@ -95,7 +115,7 @@ class TrueblocksLoader:
             txn = blockchain.BlockchainTransaction.objects.create(**recordDict)
             txn.save()
             txn.contracts_created.set(contractsCreated)
-            txn.addresses_involved.set(addressesInvolved)
+            # txn.addresses_involved.set(addressesInvolved)
             txn.logs.set(logs)
             if includeTraces:
                 txn.traces.set(traces)

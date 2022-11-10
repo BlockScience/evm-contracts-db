@@ -80,9 +80,20 @@ class BlockchainTransaction(models.Model):
         related_name='created_by_transaction'
     )
 
+    # TODO: once the method for doing this is more reliable in TrueblocksLoader, store a full list of all addresses involved in the transaction
+    # addresses_involved = models.ManyToManyField(
+    #     BlockchainAddress,
+    #     related_name='involved_in_transaction'
+    # )
+
     @property
     def timestamp(self):
         return get_timestamp(self.block_number)
+
+    # @property
+    # def most_recent_appearance(self):
+    #     # TODO: implement
+    #     return
 
     def contains_address(self, address):
         """Check if an address (string) appears anywhere in the transaction"""
