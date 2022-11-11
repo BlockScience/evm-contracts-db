@@ -13,4 +13,5 @@ psycopg2-binary
 pytest
 python-dotenv
 requests
+seaborn
 web3
